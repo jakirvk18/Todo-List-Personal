@@ -5,7 +5,6 @@
 
 @property --angle { syntax: "<angle>";  initial-value: 0deg; inherits: false; }
 @property --hv    { syntax: "<number>"; initial-value: 0;    inherits: false; }
-@property --p     { syntax: "<number>"; initial-value: 0;    inherits: true;  }
 
 :root {
     --bg: #05060b;
@@ -161,7 +160,7 @@ body::after {
 
 .header {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
     padding: 10px 12px 10px 16px;
     margin-bottom: 18px;
@@ -173,38 +172,11 @@ body::after {
     box-shadow: 0 14px 34px -22px #000, inset 0 1px 0 rgba(255, 255, 255, .07);
 }
 
-.logo {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    font-family: var(--font-d);
-    font-size: 24px;
-    font-weight: 700;
-    letter-spacing: -.02em;
-}
-
-.logo::before {
-    content: "";
-    width: 26px;
-    height: 26px;
-    border-radius: 9px;
-    background: conic-gradient(from 200deg, #ff5d73, #a855ff, #3ee6c4, #ff5d73);
-    box-shadow: 0 0 20px var(--glow), inset 0 0 0 5px rgba(5, 6, 11, .55);
-    animation: spin 8s linear infinite;
-}
-
-.logo span {
-    background: var(--grad);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
 .header-right {
     display: flex;
     align-items: center;
-    gap: 9px;
-    padding: 8px 14px;
+    gap: 12px;
+    padding: 10px 20px;
     border-radius: 999px;
     background: rgba(255, 255, 255, .05);
     border: 1px solid var(--line);
@@ -212,8 +184,8 @@ body::after {
 
 .live-dot {
     position: relative;
-    width: 7px;
-    height: 7px;
+    width: 9px;
+    height: 9px;
     border-radius: 50%;
     background: var(--mint);
     box-shadow: 0 0 10px var(--mint);
@@ -235,16 +207,16 @@ body::after {
 
 .date {
     color: #b3b9cc;
-    font-size: 10px;
+    font-size: 16px;
     font-weight: 600;
-    letter-spacing: 1.5px;
+    letter-spacing: 2px;
 }
 
 /* ============ HERO ============ */
 
 .hero {
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr;
     align-items: center;
     gap: 28px;
     padding: 36px 34px;
@@ -354,120 +326,6 @@ body::after {
     width: 34px;
     height: 1px;
     background: linear-gradient(90deg, var(--a2), transparent);
-}
-
-/* ---- progress ring ---- */
-
-.ring {
-    --p: 0;
-    position: relative;
-    width: 176px;
-    height: 176px;
-    border-radius: 50%;
-    display: grid;
-    place-items: center;
-    transition: --p .9s var(--ease);
-    flex-shrink: 0;
-}
-
-.ring::before,
-.ring::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: 50%;
-    background: conic-gradient(
-        from 0deg,
-        #ff5d73 0%,
-        #ff4d9a calc(var(--p) * .45%),
-        #a855ff calc(var(--p) * .8%),
-        #3ee6c4 calc(var(--p) * 1%),
-        rgba(255, 255, 255, .07) calc(var(--p) * 1%)
-    );
-}
-
-.ring::before {
-    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 13px), #000 calc(100% - 12px));
-    mask: radial-gradient(farthest-side, transparent calc(100% - 13px), #000 calc(100% - 12px));
-}
-
-/* glow copy underneath */
-.ring::after {
-    z-index: -1;
-    filter: blur(18px);
-    opacity: .55;
-    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 22px), #000 calc(100% - 4px));
-    mask: radial-gradient(farthest-side, transparent calc(100% - 22px), #000 calc(100% - 4px));
-}
-
-.ring-orbit {
-    position: absolute;
-    inset: -16px;
-    border-radius: 50%;
-    border: 1px dashed rgba(255, 255, 255, .15);
-    animation: spin 34s linear infinite;
-}
-
-.ring-orbit::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: -4px;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #fff;
-    box-shadow: 0 0 14px 3px var(--a2);
-}
-
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.ring-core {
-    position: relative;
-    width: calc(100% - 38px);
-    height: calc(100% - 38px);
-    border-radius: 50%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background:
-        radial-gradient(circle at 50% 0%, rgba(255, 255, 255, .10), transparent 60%),
-        rgba(8, 9, 16, .72);
-    border: 1px solid var(--line);
-    box-shadow: inset 0 0 30px rgba(168, 85, 255, .12);
-}
-
-.ring-value {
-    display: flex;
-    align-items: baseline;
-    font-family: var(--font-d);
-    font-weight: 700;
-    line-height: 1;
-}
-
-.ring-num {
-    font-size: 46px;
-    letter-spacing: -.04em;
-    background: linear-gradient(180deg, #fff, #b9bfd4);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    font-variant-numeric: tabular-nums;
-}
-
-.ring-unit {
-    font-size: 16px;
-    color: var(--a2);
-    margin-left: 2px;
-}
-
-.ring-cap {
-    margin-top: 7px;
-    font-size: 8px;
-    font-weight: 700;
-    letter-spacing: 2.4px;
-    color: var(--muted);
 }
 
 /* ============ STATS ============ */
@@ -1274,20 +1132,12 @@ input:focus {
     body { padding: 18px 12px 40px; }
 
     .hero {
-        grid-template-columns: 1fr;
         padding: 28px 22px;
         gap: 26px;
         text-align: left;
     }
 
-    .ring {
-        justify-self: center;
-        width: 150px;
-        height: 150px;
-        margin: 10px 0;
-    }
-
-    .ring-num { font-size: 38px; }
+    .date { font-size: 14px; }
 
     .stat { padding: 14px 13px 16px; border-radius: 18px; }
     .stat-value { font-size: 31px; margin-top: 11px; }
