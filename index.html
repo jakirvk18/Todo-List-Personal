@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -735,11 +734,11 @@ input:focus {
     <section class="default-panel">
         <div class="panel-heading">
             <i class="fa-solid fa-flag-checkered"></i>
-            DEFAULT <span>TASKS</span>
+            <span id="defaultDay">TODAY'S</span> <span>TASKS</span>
         </div>
 
-        <div class="panel-subtitle">
-            Quickly add your frequently used study tasks.
+        <div class="panel-subtitle" id="defaultSubtitle">
+            Quickly add your planned study tasks for today.
         </div>
 
         <div class="default-list" id="defaultList"></div>
@@ -795,12 +794,57 @@ input:focus {
 
 const STORAGE_KEY = "focusTrackerV3";
 
-const DEFAULTS = [
-    { name: "Aptitude", duration: 60},
-    { name: "Mathematics", duration: 120 },
-    { name: "Core Subjects", duration: 120 },
-    { name: "Problem Solving / PYQs", duration: 120 }
+/* ---------- WEEKLY SCHEDULE ----------
+   Keys follow Date.getDay(): 0 = Sunday ... 6 = Saturday.
+   Edit names / durations (minutes) here. */
+
+const DEFAULT_MINUTES = 120;
+
+const SUBJECTS = {
+    CO:    "Calculus and Optimization",
+    PYDSA: "Python & DSA",
+    LA:    "Linear Algebra",
+    AI:    "Artificial Intelligence",
+    ML:    "Machine Learning",
+    PS:    "Probability and Statistics",
+    DBMS:  "DBMS",
+    DW:    "Data Warehousing",
+    TEST:  "Test"
+};
+
+const WEEKLY_SCHEDULE = {
+    0: [{ subject: "TEST",  duration: 180 }],                                   // Sunday
+    1: [{ subject: "CO" },    { subject: "PYDSA" }],                            // Monday
+    2: [{ subject: "LA" },    { subject: "AI" }],                               // Tuesday
+    3: [{ subject: "LA" },    { subject: "ML" }],                               // Wednesday
+    4: [{ subject: "PS" },    { subject: "ML" }],                               // Thursday
+    5: [{ subject: "PS" },    { subject: "DBMS" }],                             // Friday
+    6: [{ subject: "PS" },    { subject: "DW" }]                                // Saturday
+};
+
+const DAY_NAMES = [
+    "SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY",
+    "THURSDAY", "FRIDAY", "SATURDAY"
 ];
+
+/* Common tasks every day EXCEPT Sunday (Sunday is Test only) */
+const DAILY_TASKS = [
+    { name: "Aptitude", duration: 60 },
+    { name: "PYQs",     duration: 120 }
+];
+
+function getDefaults() {
+    const day = new Date().getDay();
+
+    const subjects = (WEEKLY_SCHEDULE[day] || []).map(item => ({
+        name: SUBJECTS[item.subject],
+        duration: item.duration || DEFAULT_MINUTES
+    }));
+
+    if (day === 0) return subjects;
+
+    return subjects.concat(DAILY_TASKS.map(t => ({ ...t })));
+}
 
 function today() {
     const d = new Date();
@@ -861,10 +905,17 @@ function formatTime(seconds) {
 /* DEFAULT TASKS UI */
 
 function renderDefaults() {
+    const defaults = getDefaults();
+    const dayName = DAY_NAMES[new Date().getDay()];
+
+    document.getElementById("defaultDay").textContent = dayName;
+    document.getElementById("defaultSubtitle").textContent =
+        "Planned study tasks for " + dayName.toLowerCase() + ". Tap to add.";
+
     const list = document.getElementById("defaultList");
     list.innerHTML = "";
 
-    DEFAULTS.forEach((item, index) => {
+    defaults.forEach((item, index) => {
         const row = document.createElement("div");
         row.className = "default-item";
 
@@ -904,7 +955,9 @@ function createTask(name, duration) {
 }
 
 function addDefault(index) {
-    const item = DEFAULTS[index];
+    const item = getDefaults()[index];
+
+    if (!item) return;
 
     createTask(item.name, item.duration);
 }
@@ -916,7 +969,7 @@ function addAllDefaults() {
 
     let added = 0;
 
-    DEFAULTS.forEach(item => {
+    getDefaults().forEach(item => {
         if (!existing.includes(item.name.toLowerCase())) {
             state.tasks.push({
                 id: Date.now() + Math.floor(Math.random() * 100000),
@@ -1288,6 +1341,7 @@ function checkNewDay() {
     if (state.date !== today()) {
         state = newState();
         save();
+        renderDefaults();
         renderTasks();
     }
 }
