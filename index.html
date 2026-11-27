@@ -452,15 +452,8 @@ button i {
     border-color: var(--red);
 }
 
-/* DEFAULT TASKS PANEL */
+/* PANEL HEADINGS */
 
-.default-panel {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 13px;
-    padding: 20px;
-    margin-top: 27px;
-}
 
 .panel-heading {
     font-family: "Barlow Condensed", sans-serif;
@@ -480,52 +473,12 @@ button i {
     line-height: 1.6;
 }
 
-.default-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
 
-.default-item {
-    background: #0b0d10;
-    border: 1px solid #292e36;
-    padding: 13px;
-    border-radius: 8px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-}
 
-.default-name {
-    font-size: 11px;
-    font-weight: 600;
-}
 
-.default-time {
-    color: var(--muted);
-    font-size: 10px;
-    margin-top: 4px;
-}
 
-.small-add {
-    padding: 9px 12px;
-    background: #282d35;
-    color: white;
-    white-space: nowrap;
-}
 
-.small-add:hover {
-    background: var(--red);
-}
 
-.add-all {
-    width: 100%;
-    margin-top: 12px;
-    background: var(--red);
-    color: white;
-    padding: 13px;
-}
 
 /* CUSTOM TASK PANEL */
 
@@ -574,6 +527,76 @@ input:focus {
     background: var(--red);
     color: white;
     margin-bottom: 10px;
+}
+
+/* EVERYDAY OPTION */
+
+.everyday-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #a5aab3;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    margin-top: 2px;
+}
+
+.everyday-check input {
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    margin: 0;
+    accent-color: var(--red);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.everyday-list {
+    margin-top: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.everyday-title {
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 1.3px;
+}
+
+.everyday-item {
+    background: #0b0d10;
+    border: 1px solid #292e36;
+    border-radius: 8px;
+    padding: 11px 13px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.everyday-item small {
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 500;
+    margin-left: 8px;
+}
+
+.everyday-remove {
+    padding: 7px 10px;
+    background: transparent;
+    color: #858c97;
+    border: 1px solid #343a43;
+}
+
+.everyday-remove:hover {
+    color: var(--red);
+    border-color: var(--red);
 }
 
 /* EMPTY STATE */
@@ -876,25 +899,6 @@ input:focus {
         <div id="taskList"></div>
     </section>
 
-    <!-- DEFAULT TASKS -->
-    <section class="default-panel">
-        <div class="panel-heading">
-            <i class="fa-solid fa-flag-checkered"></i>
-            <span id="defaultDay">TODAY'S</span> <span>TASKS</span>
-        </div>
-
-        <div class="panel-subtitle" id="defaultSubtitle">
-            Quickly add your planned study tasks for today.
-        </div>
-
-        <div class="default-list" id="defaultList"></div>
-
-        <button class="add-all" onclick="addAllDefaults()">
-            <i class="fa-solid fa-plus"></i>
-            ADD ALL DEFAULT TASKS
-        </button>
-    </section>
-
     <!-- CUSTOM TASKS -->
     <section class="custom-panel">
         <div class="custom-heading">
@@ -923,6 +927,13 @@ input:focus {
                 ADD TASK
             </button>
         </div>
+
+        <label class="everyday-check">
+            <input type="checkbox" id="taskEveryday">
+            Make this a default task every day
+        </label>
+
+        <div class="everyday-list" id="everydayList"></div>
     </section>
 
     <div class="reset-area">
@@ -1039,9 +1050,20 @@ function getDefaultsForDay(day) {
         duration: item.duration || DEFAULT_MINUTES
     }));
 
-    if (day === 0) return subjects;
+    const base = day === 0
+        ? subjects
+        : subjects.concat(DAILY_TASKS.map(t => ({ ...t })));
 
-    return subjects.concat(DAILY_TASKS.map(t => ({ ...t })));
+    /* custom everyday tasks apply to every day; skip name clashes */
+    const names = base.map(t => t.name.toLowerCase());
+
+    everydayTasks.forEach(t => {
+        if (!names.includes(t.name.toLowerCase())) {
+            base.push({ name: t.name, duration: t.duration });
+        }
+    });
+
+    return base;
 }
 
 function today() {
@@ -1057,6 +1079,7 @@ function today() {
 function newState() {
     return {
         date: today(),
+        seeded: false,
         tasks: [],
         activeId: null,
         lastTick: null,
@@ -1291,41 +1314,87 @@ function formatTime(seconds) {
         .join(":");
 }
 
-/* DEFAULT TASKS UI */
+/* EVERYDAY CUSTOM TASKS (saved across days) */
 
-function renderDefaults() {
-    const defaults = getDefaults();
-    const dayName = DAY_NAMES[new Date().getDay()];
+const EVERYDAY_KEY = "focusTrackerEverydayV1";
 
-    document.getElementById("defaultDay").textContent = dayName;
-    document.getElementById("defaultSubtitle").textContent =
-        "Planned study tasks for " + dayName.toLowerCase() + ". Tap to add.";
+function loadEveryday() {
+    try {
+        const list = JSON.parse(localStorage.getItem(EVERYDAY_KEY));
 
-    const list = document.getElementById("defaultList");
+        if (Array.isArray(list)) {
+            return list.filter(t =>
+                t && typeof t.name === "string" &&
+                Number.isInteger(t.duration));
+        }
+    } catch (e) {}
+
+    return [];
+}
+
+let everydayTasks = loadEveryday();
+
+function saveEveryday() {
+    localStorage.setItem(EVERYDAY_KEY, JSON.stringify(everydayTasks));
+}
+
+function addEveryday(name, duration) {
+    const existing = everydayTasks.find(
+        t => t.name.toLowerCase() === name.toLowerCase()
+    );
+
+    if (existing) {
+        existing.duration = duration;
+    } else {
+        everydayTasks.push({ name: name, duration: duration });
+    }
+
+    saveEveryday();
+    renderEveryday();
+}
+
+function removeEveryday(index) {
+    const item = everydayTasks[index];
+
+    if (!item) return;
+    if (!confirm('Stop adding "' + item.name + '" every day?')) return;
+
+    everydayTasks.splice(index, 1);
+
+    saveEveryday();
+    renderEveryday();
+    recordHistory();
+}
+
+function renderEveryday() {
+    const list = document.getElementById("everydayList");
     list.innerHTML = "";
 
-    defaults.forEach((item, index) => {
+    if (everydayTasks.length === 0) return;
+
+    const title = document.createElement("div");
+    title.className = "everyday-title";
+    title.textContent = "YOUR EVERYDAY TASKS";
+    list.appendChild(title);
+
+    everydayTasks.forEach((item, index) => {
         const row = document.createElement("div");
-        row.className = "default-item";
+        row.className = "everyday-item";
 
-        const info = document.createElement("div");
+        const label = document.createElement("div");
+        label.textContent = item.name;
 
-        const name = document.createElement("div");
-        name.className = "default-name";
-        name.textContent = item.name;
+        const mins = document.createElement("small");
+        mins.textContent = item.duration + " MIN";
+        label.appendChild(mins);
 
-        const time = document.createElement("div");
-        time.className = "default-time";
-        time.textContent = item.duration + " MINUTES";
+        const remove = document.createElement("button");
+        remove.className = "everyday-remove";
+        remove.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+        remove.title = "Remove from every day";
+        remove.onclick = () => removeEveryday(index);
 
-        info.append(name, time);
-
-        const button = document.createElement("button");
-        button.className = "small-add";
-        button.innerHTML = '<i class="fa-solid fa-plus"></i> ADD';
-        button.onclick = () => addDefault(index);
-
-        row.append(info, button);
+        row.append(label, remove);
         list.appendChild(row);
     });
 }
@@ -1343,20 +1412,10 @@ function createTask(name, duration) {
     renderTasks();
 }
 
-function addDefault(index) {
-    const item = getDefaults()[index];
+/* AUTO-LOAD TODAY'S DEFAULTS (once per day) */
 
-    if (!item) return;
-
-    createTask(item.name, item.duration);
-}
-
-function addAllDefaults() {
-    const existing = state.tasks
-        .filter(t => !t.completed)
-        .map(t => t.name.toLowerCase());
-
-    let added = 0;
+function seedDefaults() {
+    const existing = state.tasks.map(t => t.name.toLowerCase());
 
     getDefaults().forEach(item => {
         if (!existing.includes(item.name.toLowerCase())) {
@@ -1367,15 +1426,10 @@ function addAllDefaults() {
                 remaining: item.duration * 60,
                 completed: false
             });
-
-            added++;
         }
     });
 
-    if (added === 0) {
-        alert("All default tasks are already in your task list.");
-        return;
-    }
+    state.seeded = true;
 
     save();
     renderTasks();
@@ -1709,10 +1763,24 @@ function addTask() {
         return;
     }
 
-    createTask(name, duration);
+    const everyday = document.getElementById("taskEveryday");
+
+    if (everyday.checked) {
+        addEveryday(name, duration);
+
+        const already = state.tasks.some(
+            t => t.name.toLowerCase() === name.toLowerCase()
+        );
+
+        if (!already) createTask(name, duration);
+        else recordHistory();
+    } else {
+        createTask(name, duration);
+    }
 
     nameInput.value = "";
     durationInput.value = "";
+    everyday.checked = false;
 }
 
 function resetDay() {
@@ -1720,8 +1788,7 @@ function resetDay() {
 
     state = newState();
 
-    save();
-    renderTasks();
+    seedDefaults();
 }
 
 /* DAILY RESET */
@@ -1729,9 +1796,7 @@ function resetDay() {
 function checkNewDay() {
     if (state.date !== today()) {
         state = newState();
-        save();
-        renderDefaults();
-        renderTasks();
+        seedDefaults();
 
         viewYear = new Date().getFullYear();
         viewMonth = new Date().getMonth();
@@ -1766,8 +1831,14 @@ document.getElementById("taskDuration")
 
 checkNewDay();
 updateDate();
-renderDefaults();
-renderTasks();
+renderEveryday();
+
+if (!state.seeded) {
+    seedDefaults();
+} else {
+    renderTasks();
+}
+
 recordHistory();
 renderStreak();
 
