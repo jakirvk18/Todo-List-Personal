@@ -619,6 +619,144 @@ input:focus {
     border-color: var(--red);
 }
 
+/* STREAK CALENDAR */
+
+.streak-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    padding: 21px;
+    margin-top: 27px;
+}
+
+.streak-panel .stats {
+    margin-bottom: 18px;
+}
+
+.cal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.cal-title {
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 21px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.cal-nav {
+    display: flex;
+    gap: 6px;
+}
+
+.cal-nav button {
+    padding: 8px 12px;
+    background: #282d35;
+    color: white;
+}
+
+.cal-nav button i {
+    margin: 0;
+}
+
+.cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+}
+
+.cal-dow {
+    text-align: center;
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+    padding-bottom: 4px;
+}
+
+.cal-cell {
+    aspect-ratio: 1 / 1;
+    border-radius: 8px;
+    border: 1px solid #292e36;
+    background: #0b0d10;
+    color: #5e6672;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.cal-cell.blank {
+    border: none;
+    background: transparent;
+}
+
+.cal-cell.done {
+    background: #1d3a2b;
+    border-color: #3f8f66;
+    color: var(--green);
+}
+
+.cal-cell.done::after {
+    content: "";
+    position: absolute;
+    bottom: 5px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 6px #72d6a0;
+}
+
+.cal-cell.partial {
+    background: #3a2f1d;
+    border-color: #8f7a3f;
+    color: #e0b95c;
+}
+
+.cal-cell.missed {
+    background: #2b1519;
+    border-color: #6a2a33;
+    color: #c4545f;
+}
+
+.cal-cell.today {
+    outline: 2px solid var(--red);
+    outline-offset: 1px;
+    color: white;
+}
+
+.cal-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 14px;
+    color: var(--muted);
+    font-size: 9px;
+    letter-spacing: 1px;
+}
+
+.cal-legend span::before {
+    content: "";
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-radius: 3px;
+    margin-right: 6px;
+    vertical-align: -1px;
+    background: #0b0d10;
+    border: 1px solid #292e36;
+}
+
+.cal-legend .l-done::before { background: #1d3a2b; border-color: #3f8f66; }
+.cal-legend .l-partial::before { background: #3a2f1d; border-color: #8f7a3f; }
+.cal-legend .l-missed::before { background: #2b1519; border-color: #6a2a33; }
+
 /* CHECKER STRIPE */
 
 .checker {
@@ -661,6 +799,14 @@ input:focus {
 
     .add-row {
         grid-template-columns: 1fr 115px;
+    }
+
+    .cal-grid {
+        gap: 4px;
+    }
+
+    .cal-cell {
+        font-size: 10px;
     }
 }
 </style>
@@ -786,6 +932,56 @@ input:focus {
         </button>
     </div>
 
+    <!-- STREAK CALENDAR -->
+    <section class="streak-panel">
+        <div class="panel-heading">
+            <i class="fa-solid fa-fire"></i>
+            STREAK <span>TRACKER</span>
+        </div>
+
+        <div class="panel-subtitle">
+            A day counts when every default task planned for it is completed.
+        </div>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-label">Current streak</div>
+                <div class="stat-value" id="curStreak">0</div>
+            </div>
+
+            <div class="stat">
+                <div class="stat-label">Best streak</div>
+                <div class="stat-value" id="bestStreak">0</div>
+            </div>
+
+            <div class="stat">
+                <div class="stat-label">This month</div>
+                <div class="stat-value" id="monthDone">0</div>
+            </div>
+        </div>
+
+        <div class="cal-head">
+            <div class="cal-title" id="calTitle"></div>
+
+            <div class="cal-nav">
+                <button onclick="changeMonth(-1)" title="Previous month">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <button id="calNext" onclick="changeMonth(1)" title="Next month">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="cal-grid" id="calGrid"></div>
+
+        <div class="cal-legend">
+            <span class="l-done">ALL DONE</span>
+            <span class="l-partial">PARTIAL</span>
+            <span class="l-missed">MISSED</span>
+        </div>
+    </section>
+
     <div class="checker"></div>
 
 </div>
@@ -834,8 +1030,10 @@ const DAILY_TASKS = [
 ];
 
 function getDefaults() {
-    const day = new Date().getDay();
+    return getDefaultsForDay(new Date().getDay());
+}
 
+function getDefaultsForDay(day) {
     const subjects = (WEEKLY_SCHEDULE[day] || []).map(item => ({
         name: SUBJECTS[item.subject],
         duration: item.duration || DEFAULT_MINUTES
@@ -888,6 +1086,197 @@ let state = loadState();
 
 function save() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    recordHistory();
+}
+
+/* ---------- STREAK HISTORY ----------
+   habitLog = { start: "YYYY-MM-DD", days: { "YYYY-MM-DD": { done, total } } }
+   done  = distinct default tasks completed that day
+   total = number of default tasks planned for that day */
+
+const HISTORY_KEY = "focusTrackerHistoryV1";
+
+function loadHistory() {
+    try {
+        const h = JSON.parse(localStorage.getItem(HISTORY_KEY));
+
+        if (h && h.days && typeof h.days === "object") {
+            if (!h.start) h.start = today();
+            return h;
+        }
+    } catch (e) {}
+
+    return { start: today(), days: {} };
+}
+
+let habitLog = loadHistory();
+
+function recordHistory() {
+    if (state.date !== today()) return;
+
+    const planned = getDefaults().map(d => d.name.toLowerCase());
+
+    const doneSet = new Set(
+        state.tasks
+            .filter(t => t.completed)
+            .map(t => t.name.toLowerCase())
+            .filter(n => planned.includes(n))
+    );
+
+    const entry = { done: doneSet.size, total: planned.length };
+    const old = habitLog.days[state.date];
+
+    if (old && old.done === entry.done && old.total === entry.total) return;
+
+    habitLog.days[state.date] = entry;
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(habitLog));
+
+    renderStreak();
+}
+
+function dateKey(d) {
+    return [
+        d.getFullYear(),
+        String(d.getMonth() + 1).padStart(2, "0"),
+        String(d.getDate()).padStart(2, "0")
+    ].join("-");
+}
+
+function isFullDay(key) {
+    const e = habitLog.days[key];
+    return !!e && e.total > 0 && e.done >= e.total;
+}
+
+function calcStreaks() {
+    const now = new Date();
+    now.setHours(12, 0, 0, 0);
+
+    /* current streak: today counts if done, otherwise start from yesterday */
+    let current = 0;
+    const cursor = new Date(now);
+
+    if (!isFullDay(dateKey(cursor))) {
+        cursor.setDate(cursor.getDate() - 1);
+    }
+
+    while (isFullDay(dateKey(cursor))) {
+        current++;
+        cursor.setDate(cursor.getDate() - 1);
+    }
+
+    /* best streak: longest run of consecutive complete days */
+    const keys = Object.keys(habitLog.days).filter(isFullDay).sort();
+
+    let best = 0;
+    let run = 0;
+    let prev = null;
+
+    keys.forEach(k => {
+        const d = new Date(k + "T12:00:00");
+
+        if (prev) {
+            const next = new Date(prev);
+            next.setDate(next.getDate() + 1);
+            run = dateKey(next) === k ? run + 1 : 1;
+        } else {
+            run = 1;
+        }
+
+        best = Math.max(best, run);
+        prev = d;
+    });
+
+    return { current, best };
+}
+
+/* ---------- STREAK CALENDAR ---------- */
+
+const MONTH_NAMES = [
+    "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
+    "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"
+];
+
+const DOW = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+
+let viewYear = new Date().getFullYear();
+let viewMonth = new Date().getMonth();
+
+function changeMonth(delta) {
+    const now = new Date();
+    const target = new Date(viewYear, viewMonth + delta, 1);
+
+    if (target > new Date(now.getFullYear(), now.getMonth(), 1)) return;
+
+    viewYear = target.getFullYear();
+    viewMonth = target.getMonth();
+
+    renderStreak();
+}
+
+function renderStreak() {
+    const grid = document.getElementById("calGrid");
+    if (!grid) return;
+
+    grid.innerHTML = "";
+
+    DOW.forEach(label => {
+        const h = document.createElement("div");
+        h.className = "cal-dow";
+        h.textContent = label;
+        grid.appendChild(h);
+    });
+
+    const todayKey = today();
+    const first = new Date(viewYear, viewMonth, 1);
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+    const offset = (first.getDay() + 6) % 7; /* Monday first */
+
+    for (let i = 0; i < offset; i++) {
+        const blank = document.createElement("div");
+        blank.className = "cal-cell blank";
+        grid.appendChild(blank);
+    }
+
+    let monthComplete = 0;
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        const key = dateKey(new Date(viewYear, viewMonth, day));
+        const entry = habitLog.days[key];
+
+        const cell = document.createElement("div");
+        cell.className = "cal-cell";
+        cell.textContent = day;
+
+        if (isFullDay(key)) {
+            cell.classList.add("done");
+            monthComplete++;
+        } else if (entry && entry.done > 0) {
+            cell.classList.add("partial");
+        } else if (key < todayKey && key >= habitLog.start) {
+            cell.classList.add("missed");
+        }
+
+        if (key === todayKey) cell.classList.add("today");
+
+        if (entry) {
+            cell.title = entry.done + " / " + entry.total + " default tasks";
+        }
+
+        grid.appendChild(cell);
+    }
+
+    document.getElementById("calTitle").textContent =
+        MONTH_NAMES[viewMonth] + " " + viewYear;
+
+    const now = new Date();
+    document.getElementById("calNext").disabled =
+        viewYear === now.getFullYear() && viewMonth === now.getMonth();
+
+    const streaks = calcStreaks();
+
+    document.getElementById("curStreak").textContent = streaks.current;
+    document.getElementById("bestStreak").textContent = streaks.best;
+    document.getElementById("monthDone").textContent = monthComplete;
 }
 
 function formatTime(seconds) {
@@ -1343,6 +1732,10 @@ function checkNewDay() {
         save();
         renderDefaults();
         renderTasks();
+
+        viewYear = new Date().getFullYear();
+        viewMonth = new Date().getMonth();
+        renderStreak();
     }
 }
 
@@ -1375,6 +1768,8 @@ checkNewDay();
 updateDate();
 renderDefaults();
 renderTasks();
+recordHistory();
+renderStreak();
 
 /* Smooth timer updates without blinking */
 
