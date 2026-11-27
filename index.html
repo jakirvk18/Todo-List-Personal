@@ -7,7 +7,7 @@
 
 <link rel="icon" type="image/png" href="./logo.png" sizes="32x32">
 <link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#090a0c">
+<meta name="theme-color" content="#05060b">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 
@@ -18,13 +18,17 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
 <!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <!-- Styles -->
 <link rel="stylesheet" href="./style.css">
 </head>
 
 <body>
+
+<!-- background graphics (particle canvas is injected by fx.js) -->
+<div class="bg-grid" aria-hidden="true"></div>
+<div class="bg-spot" id="spot" aria-hidden="true"></div>
 
 <div class="container">
 
@@ -38,30 +42,42 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
     </header>
 
     <section class="hero">
-        <div class="hero-label">PERFORMANCE MODE</div>
-        <div class="hero-title">
-            OWN YOUR<br>
-            <span>TIME </span>
-            ZAKIR
+        <div class="hero-copy">
+            <div class="hero-label">PERFORMANCE MODE</div>
+            <div class="hero-title">
+                OWN YOUR<br>
+                <span>TIME </span>
+                ZAKIR
+            </div>
+            <div class="hero-description">
+                STAY FOCUSED. FINISH STRONG.
+            </div>
         </div>
-        <div class="hero-description">
-            STAY FOCUSED. FINISH STRONG.
+
+        <div class="ring" id="ring" aria-hidden="true">
+            <div class="ring-orbit"></div>
+            <div class="ring-core">
+                <div class="ring-value">
+                    <span class="ring-num" id="ringNum">0</span><span class="ring-unit">%</span>
+                </div>
+                <div class="ring-cap">TODAY</div>
+            </div>
         </div>
     </section>
 
     <section class="stats">
         <div class="stat">
-            <div class="stat-label">Completed</div>
+            <div class="stat-label"><i class="fa-solid fa-check"></i>Completed</div>
             <div class="stat-value" id="completed">0</div>
         </div>
 
         <div class="stat">
-            <div class="stat-label">Remaining</div>
+            <div class="stat-label"><i class="fa-solid fa-hourglass-half"></i>Remaining</div>
             <div class="stat-value" id="remaining">3</div>
         </div>
 
         <div class="stat">
-            <div class="stat-label">Focus time</div>
+            <div class="stat-label"><i class="fa-solid fa-bolt"></i>Focus time</div>
             <div class="stat-value" id="focusTime">0m</div>
         </div>
     </section>
@@ -91,8 +107,8 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
     <!-- CUSTOM TASKS -->
     <section class="custom-panel">
         <div class="custom-heading">
-            <i class="fa-solid fa-circle-plus"></i>
-            CUSTOM <span>TASK</span>
+            <i class="fa-solid fa-plus"></i>
+            <div>CUSTOM <span>TASK</span></div>
         </div>
 
         <input
@@ -129,7 +145,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
     <section class="streak-panel">
         <div class="panel-heading">
             <i class="fa-solid fa-fire"></i>
-            STREAK <span>TRACKER</span>
+            <div>STREAK <span>TRACKER</span></div>
         </div>
 
         <div class="panel-subtitle">
@@ -138,17 +154,17 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
 
         <div class="stats">
             <div class="stat">
-                <div class="stat-label">Current streak</div>
+                <div class="stat-label"><i class="fa-solid fa-fire"></i>Current streak</div>
                 <div class="stat-value" id="curStreak">0</div>
             </div>
 
             <div class="stat">
-                <div class="stat-label">Best streak</div>
+                <div class="stat-label"><i class="fa-solid fa-trophy"></i>Best streak</div>
                 <div class="stat-value" id="bestStreak">0</div>
             </div>
 
             <div class="stat">
-                <div class="stat-label">This month</div>
+                <div class="stat-label"><i class="fa-solid fa-calendar-check"></i>This month</div>
                 <div class="stat-value" id="monthDone">0</div>
             </div>
         </div>
@@ -175,11 +191,12 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
         </div>
     </section>
 
-    <div class="checker"></div>
+    <footer class="footer"><b>FOCUS.</b> STAY LOCKED IN</footer>
 
 </div>
 
 <script src="./script.js"></script>
+<script src="./fx.js"></script>
 
 </body>
 </html>
