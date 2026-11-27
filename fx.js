@@ -52,26 +52,21 @@
         py = -9999;
     });
 
-    /* ---------- progress ring sync ---------- */
+    /* ---------- completion celebration ---------- */
 
     const pct = $("percentage");
-    const ring = $("ring");
-    const ringNum = $("ringNum");
 
     let lastPct = -1;
     let celebrated = false;
     let firstSync = true;
 
-    function syncRing() {
-        if (!pct || !ring) return;
+    function syncProgress() {
+        if (!pct) return;
 
         const n = Math.max(0, Math.min(100, parseInt(pct.textContent, 10) || 0));
 
         if (n === lastPct) return;
         lastPct = n;
-
-        ring.style.setProperty("--p", n);
-        if (ringNum) ringNum.textContent = n;
 
         if (firstSync) {
             celebrated = n >= 100;      // no confetti just for reloading a finished day
@@ -88,14 +83,14 @@
     }
 
     if (pct) {
-        new MutationObserver(syncRing).observe(pct, {
+        new MutationObserver(syncProgress).observe(pct, {
             childList: true,
             characterData: true,
             subtree: true
         });
     }
 
-    syncRing();
+    syncProgress();
 
     /* ---------- per-task progress line ---------- */
 
@@ -279,7 +274,7 @@
     function burst() {
         if (reduce) return;
 
-        const r = ring ? ring.getBoundingClientRect() : null;
+        const r = pct ? pct.getBoundingClientRect() : null;
         const ox = r ? r.left + r.width / 2 : W / 2;
         const oy = r ? r.top + r.height / 2 : H / 3;
 
